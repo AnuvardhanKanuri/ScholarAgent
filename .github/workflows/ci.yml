@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      
+      - name: Run lightweight smoke test
+        run: |
+          python - <<'PY'
+          import sys
+          try:
+              from backend.app import main as m
+              print("✓ Backend imports OK")
+              sys.exit(0)
+          except Exception as e:
+              print(f"✗ Import failed: {e}")
+              sys.exit(1)
+          PY
+      
+      - name: Lint with pylint (optional)
+        continue-on-error: true
+        run: |
+          pip install pylint
+          pylint backend/app/ --disable=all --enable=E,F || true
